@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Tu espacio personal para organizar y abrir tus sitios favoritos." />
+    <meta name="theme-color" content="#0b1020" />
+    <meta property="og:title" content="Atajo — Tus sitios, a un clic" />
+    <meta property="og:description" content="Organiza tus páginas favoritas en un espacio privado y sincronizado." />
+    <meta property="og:type" content="website" />
+    <title>Atajo — Tus sitios, a un clic</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <section id="setup-view" class="centered-view hidden" aria-labelledby="setup-title">
+      <div class="setup-card glass-card">
+        <div class="brand-mark" aria-hidden="true">A</div>
+        <p class="eyebrow">Configuración pendiente</p>
+        <h1 id="setup-title">Conecta tu proyecto de Supabase</h1>
+        <p>La interfaz está lista. Añade la URL y la clave pública de Supabase en <code>config.js</code> para activar las cuentas y la sincronización.</p>
+        <a class="primary-button button-link" href="README.md">Ver instrucciones</a>
+      </div>
+    </section>
+
+    <main id="auth-view" class="auth-layout hidden">
+      <section class="auth-intro">
+        <a class="brand" href="#" aria-label="Atajo, inicio">
+          <span class="brand-mark">A</span>
+          <span>Atajo</span>
+        </a>
+        <div class="intro-copy">
+          <p class="eyebrow">Tu internet, bien ordenado</p>
+          <h1>Todo lo importante.<br /><span>A un clic.</span></h1>
+          <p>Organiza tus páginas favoritas en un espacio privado, rápido y disponible en todos tus dispositivos.</p>
+          <div class="benefit-list" aria-label="Beneficios">
+            <span>✦ Sin anuncios</span>
+            <span>✦ Sin ruido</span>
+            <span>✦ Solo tus sitios</span>
+          </div>
+        </div>
+        <p class="auth-footer">Diseñado para llegar rápido a donde quieres estar.</p>
+      </section>
+
+      <section class="auth-panel">
+        <div class="auth-card glass-card">
+          <div class="auth-tabs" role="tablist" aria-label="Acceso a la cuenta">
+            <button id="login-tab" class="auth-tab active" type="button" role="tab" aria-selected="true">Iniciar sesión</button>
+            <button id="register-tab" class="auth-tab" type="button" role="tab" aria-selected="false">Crear cuenta</button>
+          </div>
+
+          <div class="auth-heading">
+            <h2 id="auth-title">Qué bueno verte</h2>
+            <p id="auth-subtitle">Ingresa para abrir tu espacio personal.</p>
+          </div>
+
+          <form id="auth-form">
+            <label class="field hidden" id="name-field">
+              <span>Tu nombre</span>
+              <input id="name-input" name="name" type="text" autocomplete="name" placeholder="¿Cómo te llamamos?" maxlength="60" />
+            </label>
+            <label class="field" id="email-field">
+              <span>Correo electrónico</span>
+              <input id="email-input" name="email" type="email" autocomplete="email" placeholder="tu@correo.com" required />
+            </label>
+            <label class="field" id="password-field">
+              <span>Contraseña</span>
+              <input id="password-input" name="password" type="password" autocomplete="current-password" placeholder="Mínimo 8 caracteres" minlength="8" required />
+            </label>
+            <button id="forgot-password-button" class="text-button" type="button">Olvidé mi contraseña</button>
+            <p id="auth-message" class="form-message hidden" role="status"></p>
+            <button id="auth-submit" class="primary-button" type="submit">
+              <span>Entrar a mi espacio</span>
+              <span aria-hidden="true">→</span>
+            </button>
+            <button id="back-to-login-button" class="text-button centered hidden" type="button">Volver a iniciar sesión</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <main id="dashboard-view" class="dashboard hidden">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Atajo, inicio">
+          <span class="brand-mark">A</span>
+          <span>Atajo</span>
+        </a>
+        <div class="header-actions">
+          <button id="theme-toggle" class="icon-button" type="button" aria-label="Cambiar tema">☼</button>
+          <div class="user-menu-wrap">
+            <button id="user-menu-button" class="avatar-button" type="button" aria-expanded="false" aria-controls="user-menu">
+              <span id="user-avatar">U</span>
+            </button>
+            <div id="user-menu" class="user-menu hidden">
+              <p id="user-email"></p>
+              <button id="logout-button" type="button">Cerrar sesión</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-shell">
+        <aside class="sidebar" aria-label="Categorías">
+          <nav id="category-list" class="category-list"></nav>
+          <div class="sidebar-note">
+            <span>⌘ K</span>
+            <p>Busca cualquier acceso rápidamente.</p>
+          </div>
+        </aside>
+
+        <section class="content">
+          <div class="welcome-row">
+            <div>
+              <p id="day-label" class="eyebrow"></p>
+              <h1 id="welcome-title">Hola 👋</h1>
+              <p>¿A dónde quieres ir hoy?</p>
+            </div>
+            <button id="add-link-button" class="primary-button compact" type="button"><span>＋</span> Nuevo acceso</button>
+          </div>
+
+          <div class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <label class="sr-only" for="search-input">Buscar accesos</label>
+            <input id="search-input" type="search" placeholder="Buscar entre tus accesos..." autocomplete="off" />
+            <kbd>⌘ K</kbd>
+          </div>
+
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow" id="section-eyebrow">Tu colección</p>
+              <h2 id="section-title">Todos los accesos</h2>
+            </div>
+            <span id="link-count" class="count-pill">0 sitios</span>
+          </div>
+
+          <div id="loading-state" class="state-card">Cargando tus accesos…</div>
+          <div id="empty-state" class="state-card hidden">
+            <div class="empty-icon">↗</div>
+            <h3>Aquí comenzará tu colección</h3>
+            <p>Agrega las páginas que usas todos los días y olvídate de buscarlas una y otra vez.</p>
+            <button id="empty-add-button" class="secondary-button" type="button">Crear mi primer acceso</button>
+          </div>
+          <div id="links-grid" class="links-grid hidden"></div>
+        </section>
+      </div>
+    </main>
+
+    <dialog id="link-dialog" class="link-dialog">
+      <form id="link-form" method="dialog">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">Tu colección</p>
+            <h2 id="dialog-title">Nuevo acceso</h2>
+          </div>
+          <button id="dialog-close" class="icon-button" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <input id="link-id" type="hidden" />
+        <label class="field">
+          <span>Nombre</span>
+          <input id="link-name" type="text" placeholder="Ej. YouTube" required maxlength="80" />
+        </label>
+        <label class="field">
+          <span>Dirección web</span>
+          <input id="link-url" type="url" placeholder="https://ejemplo.com" required />
+        </label>
+        <label class="field">
+          <span>Categoría</span>
+          <input id="link-category" type="text" list="category-options" placeholder="Ej. Trabajo" maxlength="40" />
+          <datalist id="category-options"></datalist>
+        </label>
+        <label class="color-field">
+          <span>Color</span>
+          <input id="link-color" type="color" value="#7c5cff" />
+        </label>
+        <p id="link-form-message" class="form-message hidden" role="status"></p>
+        <div class="dialog-actions">
+          <button id="delete-link-button" class="danger-button hidden" type="button">Eliminar</button>
+          <span class="dialog-spacer"></span>
+          <button id="dialog-cancel" class="ghost-button" type="button">Cancelar</button>
+          <button class="primary-button compact" type="submit">Guardar acceso</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  </body>
+</html>
