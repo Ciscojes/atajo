@@ -2,6 +2,7 @@ const { defineConfig, devices } = require("@playwright/test");
 
 module.exports = defineConfig({
   testDir: "./tests",
+  testIgnore: "**/*.live.spec.js",
   fullyParallel: true,
   reporter: "list",
   use: {

@@ -4,6 +4,21 @@ Homepage personal con cuentas, categorías y accesos sincronizados. La interfaz 
 
 **Aplicación pública:** <https://ciscojes.github.io/atajo/>
 
+## Funciones principales
+
+- Cuentas privadas y sincronización entre dispositivos mediante Supabase.
+- Creación, edición, búsqueda y favoritos por categorías.
+- Orden manual arrastrando los accesos o usando las flechas del teclado.
+- Respaldo e importación de la colección en formato JSON.
+- Renombrado de categorías y reasignación segura de sus accesos.
+- Portada personal con hora, métricas y favoritos destacados.
+- Favicons automáticos con inicial de respaldo cuando un sitio no ofrece icono.
+- Tema claro y oscuro, diseño adaptable e instalación como PWA.
+
+La importación añade los accesos del respaldo a la colección actual y omite las
+direcciones que ya existen. Quitar una categoría no elimina sus accesos: los
+reubica automáticamente en **Sin categoría**.
+
 ## Configuración
 
 1. Crea un proyecto gratuito en [Supabase](https://supabase.com/dashboard).
@@ -56,6 +71,31 @@ npm test
 La suite verifica los flujos principales en escritorio y móvil, recuperación
 de contraseña, adaptación responsive y reglas automáticas de accesibilidad. El
 despliegue en GitHub Pages se detiene automáticamente si alguna prueba falla.
+
+### Prueba real con Supabase
+
+La prueba de integración inicia sesión mediante la interfaz, crea y edita dos
+accesos, cambia su favorito y orden, renombra la categoría, recarga la página
+para comprobar la persistencia y elimina los datos técnicos al terminar.
+
+Usa una cuenta confirmada dedicada exclusivamente a pruebas y proporciona sus
+credenciales como variables de entorno; nunca las guardes en el repositorio:
+
+```bash
+## Crear y confirmar automáticamente una cuenta técnica la primera vez
+npm run test:live:setup
+
+## Ejecutar la prueba usando el .env.local ignorado por Git
+npm run test:live
+
+## Alternativa: proporcionar las variables solo para una ejecución
+ATAJO_TEST_EMAIL="correo-tecnico" \
+ATAJO_TEST_PASSWORD="contraseña-tecnica" \
+npm run test:live
+```
+
+La prueba real está separada de `npm test` para evitar depender de la red o
+modificar Supabase durante cada despliegue.
 
 ## Publicar en GitHub Pages
 

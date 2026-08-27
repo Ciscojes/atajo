@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "test": "playwright test",
+    "test:live": "node --env-file-if-exists=.env.local node_modules/@playwright/test/cli.js test --config=playwright.live.config.js",
+    "test:live:setup": "ATAJO_CREATE_TEST_USER=1 node scripts/create-live-test-user.mjs",
     "test:ui": "playwright test --ui"
   },
   "devDependencies": {

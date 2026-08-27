@@ -7,9 +7,12 @@ const configured =
   !config.supabaseAnonKey.startsWith("TU_");
 
 const $ = (selector) => document.querySelector(selector);
+const RESERVED_CATEGORIES = new Set(["todos", "favoritos"]);
 const state = { mode: "login", user: null, links: [], category: "Todos", query: "" };
 let db = null;
 let toastTimer = null;
+let draggedLinkId = null;
+let reordering = false;
 
 const views = {
   setup: $("#setup-view"),
@@ -148,10 +151,17 @@ function userName() {
 function setupUser(user) {
   state.user = user;
   const name = userName();
-  $("#welcome-title").textContent = `${greeting()}, ${name} 👋`;
+  $("#welcome-title").textContent = `${greeting()}, ${name}`;
   $("#day-label").textContent = new Intl.DateTimeFormat("es", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
   $("#user-avatar").textContent = (name[0] || "U").toUpperCase();
   $("#user-email").textContent = user.email;
+  updateClock();
+}
+
+function updateClock() {
+  const now = new Date();
+  $("#time-label").textContent = new Intl.DateTimeFormat("es", { hour: "2-digit", minute: "2-digit", hour12: false }).format(now);
+  $("#time-caption").textContent = now.getHours() < 12 ? "Empieza con intención" : now.getHours() < 19 ? "Sigue avanzando" : "Cierra el día a tu ritmo";
 }
 
 async function loadLinks() {
@@ -162,7 +172,6 @@ async function loadLinks() {
   const { data, error } = await db
     .from("links")
     .select("id,name,url,category,color,is_favorite,position,created_at")
-    .order("is_favorite", { ascending: false })
     .order("position", { ascending: true })
     .order("created_at", { ascending: true });
 
@@ -201,7 +210,14 @@ function renderCategories() {
     button.className = `category-button${state.category === name ? " active" : ""}`;
     if (state.category === name) button.setAttribute("aria-current", "page");
     const label = document.createElement("span");
-    label.textContent = `${index === 0 ? "⌂" : name === "Favoritos" ? "★" : "◇"}  ${name}`;
+    label.className = "category-label";
+    const symbol = document.createElement("span");
+    symbol.className = `category-symbol ${index === 0 ? "all" : name === "Favoritos" ? "favorite" : "custom"}`;
+    symbol.setAttribute("aria-hidden", "true");
+    if (name === "Favoritos") symbol.textContent = "★";
+    const text = document.createElement("span");
+    text.textContent = name;
+    label.append(symbol, text);
     const number = document.createElement("span");
     number.className = "category-count";
     number.textContent = count;
@@ -240,6 +256,80 @@ function safeUrl(value) {
   }
 }
 
+function makeSiteIcon(link, className = "site-icon") {
+  const icon = document.createElement("span");
+  icon.className = className;
+  icon.style.setProperty("--card-color", link.color || "#7c5cff");
+  const fallback = document.createElement("span");
+  fallback.textContent = link.name.trim().charAt(0).toUpperCase() || "↗";
+  icon.append(fallback);
+  const url = safeUrl(link.url);
+  if (url) {
+    const image = document.createElement("img");
+    image.src = `${url.origin}/favicon.ico`;
+    image.alt = "";
+    image.loading = "lazy";
+    image.referrerPolicy = "no-referrer";
+    image.addEventListener("load", () => icon.classList.add("has-image"));
+    image.addEventListener("error", () => image.remove());
+    icon.append(image);
+  }
+  return icon;
+}
+
+function isReservedCategory(value) {
+  return RESERVED_CATEGORIES.has(value.toLocaleLowerCase("es"));
+}
+
+function canReorder() {
+  return state.category === "Todos" && !state.query;
+}
+
+function normalizePositions() {
+  state.links = state.links.map((link, position) => ({ ...link, position }));
+}
+
+async function persistOrder() {
+  normalizePositions();
+  render();
+  if (previewMode) {
+    showToast("Nuevo orden guardado en la vista previa");
+    return;
+  }
+
+  reordering = true;
+  const results = await Promise.all(
+    state.links.map((link) => db.from("links").update({ position: link.position }).eq("id", link.id)),
+  );
+  const failed = results.find(({ error }) => error);
+  reordering = false;
+  if (failed) {
+    showToast(normalizeError(failed.error));
+    await loadLinks();
+    return;
+  }
+  showToast("Orden actualizado");
+}
+
+async function moveLink(link, direction) {
+  if (!canReorder() || reordering) return;
+  const currentIndex = state.links.findIndex(({ id }) => id === link.id);
+  const nextIndex = currentIndex + direction;
+  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= state.links.length) return;
+  [state.links[currentIndex], state.links[nextIndex]] = [state.links[nextIndex], state.links[currentIndex]];
+  await persistOrder();
+}
+
+async function dropLink(sourceId, targetId, placeAfter) {
+  if (!sourceId || sourceId === targetId || reordering) return;
+  const sourceIndex = state.links.findIndex(({ id }) => id === sourceId);
+  if (sourceIndex < 0) return;
+  const [moved] = state.links.splice(sourceIndex, 1);
+  const targetIndex = state.links.findIndex(({ id }) => id === targetId);
+  state.links.splice(targetIndex + (placeAfter ? 1 : 0), 0, moved);
+  await persistOrder();
+}
+
 function makeLinkCard(link) {
   const card = document.createElement("article");
   card.className = "link-card";
@@ -247,12 +337,66 @@ function makeLinkCard(link) {
 
   const top = document.createElement("div");
   top.className = "card-top";
-  const icon = document.createElement("span");
-  icon.className = "site-icon";
-  icon.textContent = link.name.trim().charAt(0).toUpperCase() || "↗";
+  const icon = makeSiteIcon(link);
 
   const actions = document.createElement("div");
   actions.className = "card-actions";
+  if (canReorder()) {
+    const dragHandle = document.createElement("button");
+    dragHandle.type = "button";
+    dragHandle.className = "card-action drag-handle";
+    dragHandle.textContent = "↕";
+    dragHandle.title = "Arrastrar para ordenar";
+    dragHandle.setAttribute("aria-label", `Ordenar acceso: ${link.name}. Usa las flechas arriba y abajo.`);
+    dragHandle.draggable = true;
+    dragHandle.addEventListener("keydown", (event) => {
+      if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      moveLink(link, ["ArrowUp", "ArrowLeft"].includes(event.key) ? -1 : 1);
+    });
+    dragHandle.addEventListener("dragstart", (event) => {
+      draggedLinkId = link.id;
+      card.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", link.id);
+    });
+    dragHandle.addEventListener("dragend", () => {
+      draggedLinkId = null;
+      document.querySelectorAll(".link-card").forEach((element) => element.classList.remove("dragging", "drag-target"));
+    });
+    actions.append(dragHandle);
+    const moveUp = document.createElement("button");
+    moveUp.type = "button";
+    moveUp.className = "card-action move-action";
+    moveUp.textContent = "↑";
+    moveUp.title = "Mover hacia arriba";
+    moveUp.disabled = state.links.findIndex(({ id }) => id === link.id) === 0;
+    moveUp.setAttribute("aria-label", `Mover ${link.name} hacia arriba`);
+    moveUp.addEventListener("click", () => moveLink(link, -1));
+    const moveDown = document.createElement("button");
+    moveDown.type = "button";
+    moveDown.className = "card-action move-action";
+    moveDown.textContent = "↓";
+    moveDown.title = "Mover hacia abajo";
+    moveDown.disabled = state.links.findIndex(({ id }) => id === link.id) === state.links.length - 1;
+    moveDown.setAttribute("aria-label", `Mover ${link.name} hacia abajo`);
+    moveDown.addEventListener("click", () => moveLink(link, 1));
+    actions.append(moveUp, moveDown);
+    card.addEventListener("dragover", (event) => {
+      if (!draggedLinkId || draggedLinkId === link.id) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      card.classList.add("drag-target");
+    });
+    card.addEventListener("dragleave", (event) => {
+      if (!card.contains(event.relatedTarget)) card.classList.remove("drag-target");
+    });
+    card.addEventListener("drop", (event) => {
+      event.preventDefault();
+      const placeAfter = event.clientY > card.getBoundingClientRect().top + card.offsetHeight / 2;
+      dropLink(draggedLinkId || event.dataTransfer.getData("text/plain"), link.id, placeAfter);
+    });
+  }
   const favorite = document.createElement("button");
   favorite.type = "button";
   favorite.className = `card-action${link.is_favorite ? " favorite" : ""}`;
@@ -279,7 +423,10 @@ function makeLinkCard(link) {
   title.textContent = link.name;
   const domain = document.createElement("p");
   domain.textContent = safeUrl(link.url)?.hostname.replace(/^www\./, "") || link.url;
-  anchor.append(title, domain);
+  const category = document.createElement("span");
+  category.className = "card-category";
+  category.textContent = link.category || "Sin categoría";
+  anchor.append(title, domain, category);
 
   card.append(top, anchor);
   return card;
@@ -287,6 +434,7 @@ function makeLinkCard(link) {
 
 function render() {
   renderCategories();
+  renderFavorites();
   const links = filteredLinks();
   const grid = $("#links-grid");
   grid.replaceChildren(...links.map(makeLinkCard));
@@ -296,6 +444,221 @@ function render() {
   const empty = links.length === 0;
   grid.classList.toggle("hidden", empty);
   $("#empty-state").classList.toggle("hidden", !empty);
+  const customCategories = new Set(state.links.map((link) => link.category || "Sin categoría"));
+  $("#total-stat").textContent = state.links.length;
+  $("#favorite-stat").textContent = state.links.filter((link) => link.is_favorite).length;
+  $("#category-stat").textContent = customCategories.size;
+  $("#sidebar-stat").textContent = `${state.links.length} ${state.links.length === 1 ? "acceso disponible" : "accesos disponibles"}`;
+}
+
+function makeFavoriteCard(link) {
+  const anchor = document.createElement("a");
+  anchor.className = "favorite-card";
+  anchor.href = link.url;
+  anchor.target = "_blank";
+  anchor.rel = "noopener noreferrer";
+  anchor.style.setProperty("--card-color", link.color || "#7c5cff");
+  const icon = makeSiteIcon(link, "favorite-icon");
+  const copy = document.createElement("span");
+  const name = document.createElement("strong");
+  name.textContent = link.name;
+  const domain = document.createElement("small");
+  domain.textContent = safeUrl(link.url)?.hostname.replace(/^www\./, "") || link.url;
+  copy.append(name, domain);
+  const arrow = document.createElement("span");
+  arrow.className = "favorite-arrow";
+  arrow.textContent = "↗";
+  arrow.setAttribute("aria-hidden", "true");
+  anchor.append(icon, copy, arrow);
+  return anchor;
+}
+
+function renderFavorites() {
+  const section = $("#favorites-section");
+  const favorites = state.links.filter((link) => link.is_favorite).slice(0, 4);
+  const visible = state.category === "Todos" && !state.query && favorites.length > 0;
+  section.classList.toggle("hidden", !visible);
+  $("#favorites-grid").replaceChildren(...favorites.map(makeFavoriteCard));
+}
+
+function renderCategoryManager() {
+  const list = $("#category-manager-list");
+  list.replaceChildren();
+  const managedCategories = [...new Set(state.links.map((link) => link.category || "Sin categoría"))]
+    .filter((category) => category !== "Sin categoría")
+    .sort((a, b) => a.localeCompare(b, "es"));
+
+  if (!managedCategories.length) {
+    const empty = document.createElement("li");
+    empty.className = "category-manager-empty";
+    empty.textContent = "Todavía no hay categorías personalizadas.";
+    list.append(empty);
+    return;
+  }
+
+  managedCategories.forEach((category) => {
+    const item = document.createElement("li");
+    item.className = "category-manager-item";
+    const name = document.createElement("span");
+    name.textContent = category;
+    const count = document.createElement("span");
+    count.className = "category-manager-count";
+    const total = state.links.filter((link) => link.category === category).length;
+    count.textContent = `${total} ${total === 1 ? "acceso" : "accesos"}`;
+    const rename = document.createElement("button");
+    rename.type = "button";
+    rename.textContent = "Renombrar";
+    rename.setAttribute("aria-label", `Renombrar categoría ${category}`);
+    rename.addEventListener("click", () => renameCategory(category));
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "Quitar";
+    remove.setAttribute("aria-label", `Quitar categoría ${category}`);
+    remove.addEventListener("click", () => removeCategory(category));
+    item.append(name, count, rename, remove);
+    list.append(item);
+  });
+}
+
+function openCollectionDialog() {
+  setMessage($("#collection-message"));
+  renderCategoryManager();
+  $("#collection-dialog").showModal();
+}
+
+async function replaceCategory(previousCategory, nextCategory) {
+  if (previewMode) {
+    state.links = state.links.map((link) => link.category === previousCategory ? { ...link, category: nextCategory } : link);
+  } else {
+    const { error } = await db.from("links").update({ category: nextCategory }).eq("category", previousCategory);
+    if (error) {
+      setMessage($("#collection-message"), normalizeError(error));
+      return false;
+    }
+    state.links = state.links.map((link) => link.category === previousCategory ? { ...link, category: nextCategory } : link);
+  }
+  if (state.category === previousCategory) state.category = nextCategory;
+  render();
+  renderCategoryManager();
+  return true;
+}
+
+async function renameCategory(category) {
+  const requestedName = prompt(`Nuevo nombre para “${category}”:`, category);
+  if (requestedName === null) return;
+  const nextCategory = requestedName.trim();
+  if (!nextCategory || nextCategory.length > 40) {
+    setMessage($("#collection-message"), "El nombre debe tener entre 1 y 40 caracteres.");
+    return;
+  }
+  if (isReservedCategory(nextCategory)) {
+    setMessage($("#collection-message"), `“${nextCategory}” está reservado para la navegación de Atajo.`);
+    return;
+  }
+  if (nextCategory === category) return;
+  const updated = await replaceCategory(category, nextCategory);
+  if (updated) setMessage($("#collection-message"), `La categoría ahora se llama “${nextCategory}”.`, true);
+}
+
+async function removeCategory(category) {
+  if (!confirm(`¿Quitar la categoría “${category}”? Sus accesos pasarán a “Sin categoría”.`)) return;
+  const updated = await replaceCategory(category, "Sin categoría");
+  if (updated) setMessage($("#collection-message"), `Los accesos de “${category}” quedaron sin categoría.`, true);
+}
+
+function exportLinks() {
+  const backup = {
+    format: "atajo-backup",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    links: state.links.map(({ name, url, category, color, is_favorite, position }) => ({
+      name,
+      url,
+      category,
+      color,
+      is_favorite,
+      position,
+    })),
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const downloadUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = downloadUrl;
+  anchor.download = `atajo-respaldo-${new Date().toISOString().slice(0, 10)}.json`;
+  anchor.click();
+  URL.revokeObjectURL(downloadUrl);
+  setMessage($("#collection-message"), `Respaldo creado con ${state.links.length} accesos.`, true);
+}
+
+function normalizeImportedLink(candidate, position) {
+  if (!candidate || typeof candidate !== "object") return null;
+  const name = String(candidate.name || "").trim().slice(0, 80);
+  const url = safeUrl(String(candidate.url || "").trim());
+  if (!name || !url) return null;
+  const rawCategory = String(candidate.category || "Sin categoría").trim();
+  const category = (rawCategory && !isReservedCategory(rawCategory) ? rawCategory : "Sin categoría").slice(0, 40);
+  const color = /^#[0-9a-f]{6}$/i.test(candidate.color) ? candidate.color : "#7c5cff";
+  return {
+    name,
+    url: url.href,
+    category,
+    color,
+    is_favorite: candidate.is_favorite === true,
+    position,
+  };
+}
+
+async function importLinks(event) {
+  const input = event.target;
+  const file = input.files?.[0];
+  if (!file) return;
+  setMessage($("#collection-message"));
+  try {
+    if (file.size > 2_000_000) throw new Error("El respaldo supera el límite de 2 MB.");
+    const backup = JSON.parse(await file.text());
+    if (backup?.format !== "atajo-backup" || backup?.version !== 1 || !Array.isArray(backup.links)) {
+      throw new Error("El archivo no es un respaldo compatible de Atajo.");
+    }
+    if (backup.links.length > 2000) throw new Error("El respaldo contiene más de 2000 accesos.");
+
+    const existingUrls = new Set(state.links.map((link) => safeUrl(link.url)?.href).filter(Boolean));
+    const imported = [];
+    let invalid = 0;
+    let duplicates = 0;
+    backup.links.forEach((candidate) => {
+      const link = normalizeImportedLink(candidate, state.links.length + imported.length);
+      if (!link) {
+        invalid += 1;
+      } else if (existingUrls.has(link.url)) {
+        duplicates += 1;
+      } else {
+        existingUrls.add(link.url);
+        imported.push(link);
+      }
+    });
+
+    if (imported.length) {
+      if (previewMode) {
+        state.links.push(...imported.map((link) => ({ ...link, id: crypto.randomUUID() })));
+        render();
+      } else {
+        const { error } = await db.from("links").insert(imported.map((link) => ({ ...link, user_id: state.user.id })));
+        if (error) throw error;
+        await loadLinks();
+      }
+    }
+    renderCategoryManager();
+    const details = [
+      `${imported.length} ${imported.length === 1 ? "acceso importado" : "accesos importados"}`,
+      duplicates ? `${duplicates} ${duplicates === 1 ? "duplicado omitido" : "duplicados omitidos"}` : "",
+      invalid ? `${invalid} ${invalid === 1 ? "entrada inválida omitida" : "entradas inválidas omitidas"}` : "",
+    ].filter(Boolean).join("; ");
+    setMessage($("#collection-message"), `${details}.`, true);
+  } catch (error) {
+    setMessage($("#collection-message"), normalizeError(error));
+  } finally {
+    input.value = "";
+  }
 }
 
 function openLinkDialog(link = null) {
@@ -321,10 +684,16 @@ async function saveLink(event) {
     return;
   }
 
+  const category = $("#link-category").value.trim() || "Sin categoría";
+  if (isReservedCategory(category)) {
+    setMessage($("#link-form-message"), `“${category}” está reservado para la navegación de Atajo.`);
+    return;
+  }
+
   const payload = {
     name: $("#link-name").value.trim(),
     url: url.href,
-    category: $("#link-category").value.trim() || "Sin categoría",
+    category,
     color: $("#link-color").value,
   };
 
@@ -393,6 +762,11 @@ function bindEvents() {
   $("#forgot-password-button").addEventListener("click", () => setAuthMode("forgot"));
   $("#back-to-login-button").addEventListener("click", () => setAuthMode("login"));
   $("#auth-form").addEventListener("submit", handleAuth);
+  $("#collection-tools-button").addEventListener("click", openCollectionDialog);
+  $("#sidebar-add-button").addEventListener("click", () => openLinkDialog());
+  $("#collection-dialog-close").addEventListener("click", () => $("#collection-dialog").close());
+  $("#export-links-button").addEventListener("click", exportLinks);
+  $("#import-file").addEventListener("change", importLinks);
   $("#theme-toggle").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
   $("#user-menu-button").addEventListener("click", () => {
     const menu = $("#user-menu");
@@ -495,6 +869,8 @@ async function init() {
 }
 
 init();
+
+setInterval(updateClock, 30_000);
 
 if ("serviceWorker" in navigator && window.location.protocol === "https:") {
   window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
