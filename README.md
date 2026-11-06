@@ -1,17 +1,18 @@
 # Atajo
 
-Homepage personal con cuentas, categorías y accesos sincronizados. La interfaz se publica en GitHub Pages y Supabase gestiona la autenticación y la base de datos.
+Atajo guarda tus enlaces por categoría y los sincroniza entre dispositivos. La interfaz se publica en GitHub Pages y Supabase gestiona la autenticación y la base de datos.
 
 **Aplicación pública:** <https://ciscojes.github.io/atajo/>
 
-## Funciones principales
+[Probar la colección de ejemplo sin cuenta](https://ciscojes.github.io/atajo/?preview)
+
+## Uso
 
 - Cuentas privadas y sincronización entre dispositivos mediante Supabase.
 - Creación, edición, búsqueda y favoritos por categorías.
 - Orden manual arrastrando los accesos o usando las flechas del teclado.
 - Respaldo e importación de la colección en formato JSON.
 - Renombrado de categorías y reasignación segura de sus accesos.
-- Portada personal con hora, métricas y favoritos destacados.
 - Favicons automáticos con inicial de respaldo cuando un sitio no ofrece icono.
 - Tema claro y oscuro, diseño adaptable e instalación como PWA.
 

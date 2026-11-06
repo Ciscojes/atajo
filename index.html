@@ -4,12 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Tu espacio personal para organizar y abrir tus sitios favoritos." />
-    <meta name="theme-color" content="#0b1020" />
-    <meta property="og:title" content="Atajo — Tus sitios, a un clic" />
+    <meta name="theme-color" content="#19231f" />
+    <meta property="og:title" content="Atajo — Enlaces personales" />
     <meta property="og:description" content="Organiza tus páginas favoritas en un espacio privado y sincronizado." />
     <meta property="og:type" content="website" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://hoxuzlwqqbfcrisovnyn.supabase.co wss://hoxuzlwqqbfcrisovnyn.supabase.co; img-src 'self' data: https:; base-uri 'self'; form-action 'self'" />
-    <title>Atajo — Tus sitios, a un clic</title>
+    <title>Atajo — Enlaces personales</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -21,11 +21,9 @@
     <script src="app.js" defer></script>
   </head>
   <body>
-    <div class="ambient ambient-one"></div>
-    <div class="ambient ambient-two"></div>
 
     <section id="setup-view" class="centered-view hidden" aria-labelledby="setup-title">
-      <div class="setup-card glass-card">
+      <div class="setup-card form-panel">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 32 32" focusable="false">
             <path d="M7.5 24.5 15.2 7.8a.9.9 0 0 1 1.6 0l7.7 16.7M11.4 18.4h9.2" />
@@ -51,28 +49,21 @@
           <span class="brand-copy"><strong>Atajo</strong><small>Espacio personal</small></span>
         </a>
         <div class="intro-copy">
-          <p class="eyebrow">Tu internet, bien ordenado</p>
-          <h1>Todo lo importante.<br /><span>A un clic.</span></h1>
-          <p>Organiza tus páginas favoritas en un espacio privado, rápido y disponible en todos tus dispositivos.</p>
-          <div class="benefit-list" aria-label="Beneficios">
-            <span>✦ Sin anuncios</span>
-            <span>✦ Sin ruido</span>
-            <span>✦ Solo tus sitios</span>
-          </div>
+          <h1>Mis enlaces</h1>
+          <p>Guarda los sitios que usas y ábrelos desde cualquiera de tus dispositivos.</p>
         </div>
-        <p class="auth-footer">Diseñado para llegar rápido a donde quieres estar.</p>
       </section>
 
       <section class="auth-panel">
-        <div class="auth-card glass-card">
+        <div class="auth-card form-panel">
           <div class="auth-tabs" role="tablist" aria-label="Acceso a la cuenta">
             <button id="login-tab" class="auth-tab active" type="button" role="tab" aria-selected="true">Iniciar sesión</button>
             <button id="register-tab" class="auth-tab" type="button" role="tab" aria-selected="false">Crear cuenta</button>
           </div>
 
           <div class="auth-heading">
-            <h2 id="auth-title">Qué bueno verte</h2>
-            <p id="auth-subtitle">Ingresa para abrir tu espacio personal.</p>
+            <h2 id="auth-title">Accede a tu cuenta</h2>
+            <p id="auth-subtitle">Usa el correo con el que guardaste tus enlaces.</p>
           </div>
 
           <form id="auth-form">
@@ -91,7 +82,7 @@
             <button id="forgot-password-button" class="text-button" type="button">Olvidé mi contraseña</button>
             <p id="auth-message" class="form-message hidden" role="status"></p>
             <button id="auth-submit" class="primary-button" type="submit">
-              <span>Entrar a mi espacio</span>
+              <span>Entrar</span>
               <span aria-hidden="true">→</span>
             </button>
             <button id="back-to-login-button" class="text-button centered hidden" type="button">Volver a iniciar sesión</button>
@@ -129,16 +120,13 @@
       <div class="dashboard-shell">
         <aside class="sidebar" aria-label="Categorías">
           <div class="sidebar-intro">
-            <p class="sidebar-overline"><span aria-hidden="true"></span> Mi espacio</p>
             <h2>Colecciones</h2>
-            <p>Todo lo importante, bien organizado.</p>
           </div>
           <button id="sidebar-add-button" class="sidebar-add-button" type="button"><span>+</span> Añadir acceso</button>
           <nav id="category-list" class="category-list" aria-label="Filtrar por categoría"></nav>
           <div class="sidebar-note">
-            <span class="sync-dot" aria-hidden="true"></span>
             <div>
-              <strong>Todo sincronizado</strong>
+              <strong>Colección</strong>
               <p id="sidebar-stat">0 accesos disponibles</p>
             </div>
           </div>
@@ -150,13 +138,11 @@
               <div class="welcome-copy">
               <p id="day-label" class="eyebrow"></p>
                 <h1 id="welcome-title">Hola</h1>
-                <p>Tu punto de partida para llegar más rápido a lo que importa.</p>
                 <button id="add-link-button" class="primary-button compact" type="button"><span>+</span> Nuevo acceso</button>
               </div>
               <div class="time-card" aria-label="Hora actual">
-                <span class="time-status"><i></i> Ahora</span>
+                <span class="time-status"><i></i> Hora local</span>
                 <strong id="time-label">--:--</strong>
-                <span id="time-caption">Tu espacio está listo</span>
               </div>
             </div>
 
@@ -170,24 +156,21 @@
           <div class="search-box">
             <span class="search-icon" aria-hidden="true">⌕</span>
             <label class="sr-only" for="search-input">Buscar accesos</label>
-            <input id="search-input" type="search" placeholder="¿A dónde quieres ir?" autocomplete="off" />
+            <input id="search-input" type="search" placeholder="Buscar por nombre, sitio o categoría" autocomplete="off" />
             <kbd>Ctrl K</kbd>
           </div>
 
           <section id="favorites-section" class="spotlight-section hidden" aria-labelledby="favorites-title">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">Más cerca</p>
-                <h2 id="favorites-title">Tus imprescindibles</h2>
+                <h2 id="favorites-title">Favoritos</h2>
               </div>
-              <span class="section-hint">Acceso inmediato</span>
             </div>
             <div id="favorites-grid" class="favorites-grid"></div>
           </section>
 
           <div class="section-heading">
             <div>
-              <p class="eyebrow" id="section-eyebrow">Tu colección</p>
               <h2 id="section-title">Todos los accesos</h2>
             </div>
             <span id="link-count" class="count-pill">0 sitios</span>
@@ -195,9 +178,8 @@
 
           <div id="loading-state" class="state-card">Cargando tus accesos…</div>
           <div id="empty-state" class="state-card hidden">
-            <div class="empty-icon">↗</div>
-            <h3>Aquí comenzará tu colección</h3>
-            <p>Agrega las páginas que usas todos los días y olvídate de buscarlas una y otra vez.</p>
+            <h3>Todavía no tienes accesos</h3>
+            <p>Guarda una dirección web para empezar.</p>
             <button id="empty-add-button" class="secondary-button" type="button">Crear mi primer acceso</button>
           </div>
           <div id="links-grid" class="links-grid hidden"></div>
@@ -209,7 +191,6 @@
       <form id="link-form" method="dialog">
         <div class="dialog-heading">
           <div>
-            <p class="eyebrow">Tu colección</p>
             <h2 id="dialog-title">Nuevo acceso</h2>
           </div>
           <button id="dialog-close" class="icon-button" type="button" aria-label="Cerrar">×</button>
@@ -246,7 +227,6 @@
       <div class="dialog-body">
         <div class="dialog-heading">
           <div>
-            <p class="eyebrow">Tu colección</p>
             <h2 id="collection-dialog-title">Administrar colección</h2>
           </div>
           <button id="collection-dialog-close" class="icon-button" type="button" aria-label="Cerrar">×</button>

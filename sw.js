@@ -1,4 +1,4 @@
-const CACHE_NAME = "atajo-shell-v3";
+const CACHE_NAME = "atajo-shell-v4";
 const SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./config.js", "./favicon.svg", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

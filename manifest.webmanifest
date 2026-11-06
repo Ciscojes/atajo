@@ -1,12 +1,12 @@
 {
-  "name": "Atajo — Tus sitios, a un clic",
+  "name": "Atajo — Enlaces personales",
   "short_name": "Atajo",
   "description": "Organiza y sincroniza tus sitios favoritos.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#080b14",
-  "theme_color": "#7c5cff",
+  "background_color": "#19231f",
+  "theme_color": "#296448",
   "icons": [
     {
       "src": "favicon.svg",

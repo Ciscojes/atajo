@@ -48,7 +48,7 @@ test("completa y persiste el flujo principal con Supabase real", async ({ page, 
     await page.goto("/");
     await page.getByLabel("Correo electrónico").fill(email);
     await page.getByLabel("Contraseña").fill(password);
-    await page.getByRole("button", { name: /Entrar a mi espacio/ }).click();
+    await page.getByRole("button", { name: /Entrar/ }).click();
     await expect(page.getByRole("button", { name: /Nuevo acceso/ })).toBeVisible();
 
     await addLink(firstName, "https://example.com/atajo-e2e-a");

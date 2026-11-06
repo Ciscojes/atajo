@@ -4,13 +4,13 @@ const AxeBuilder = require("@axe-core/playwright").default;
 test("permite buscar y administrar accesos en la vista previa", async ({ page }) => {
   await page.goto("/?preview");
   await expect(page.getByRole("heading", { name: /Jesús/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Tus imprescindibles" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Favoritos" })).toBeVisible();
   await expect(page.locator("#total-stat")).toHaveText("6");
   await expect(page.locator("#favorite-stat")).toHaveText("3");
   await expect(page.locator("#favorites-grid").getByRole("link", { name: /Gmail/ })).toBeVisible();
 
   await page.getByLabel("Buscar accesos").fill("GitHub");
-  await expect(page.getByRole("heading", { name: "Tus imprescindibles" })).toBeHidden();
+  await expect(page.getByRole("heading", { name: "Favoritos" })).toBeHidden();
   await expect(page.getByRole("link", { name: /GitHub/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /YouTube/ })).toBeHidden();
   await page.getByLabel("Buscar accesos").clear();
@@ -83,12 +83,12 @@ test("exporta, importa y organiza la colección", async ({ page }) => {
 
 test("expone el flujo de recuperación de contraseña", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Qué bueno verte" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Accede a tu cuenta" })).toBeVisible();
   await page.getByRole("button", { name: "Olvidé mi contraseña" }).click();
   await expect(page.getByRole("heading", { name: "Recupera tu acceso" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Enviar enlace" })).toBeVisible();
   await page.getByRole("button", { name: "Volver a iniciar sesión" }).click();
-  await expect(page.getByRole("heading", { name: "Qué bueno verte" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Accede a tu cuenta" })).toBeVisible();
 });
 
 test("no tiene infracciones automáticas de accesibilidad", async ({ page }) => {

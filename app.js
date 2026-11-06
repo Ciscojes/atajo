@@ -79,8 +79,8 @@ function setAuthMode(mode) {
   $("#forgot-password-button").classList.toggle("hidden", !login);
   $("#back-to-login-button").classList.toggle("hidden", !recovering && !resetting);
   const content = {
-    login: ["Qué bueno verte", "Ingresa para abrir tu espacio personal.", "Entrar a mi espacio"],
-    register: ["Crea tu espacio", "Tus sitios favoritos viajarán contigo.", "Crear mi cuenta"],
+    login: ["Accede a tu cuenta", "Usa el correo con el que guardaste tus enlaces.", "Entrar"],
+    register: ["Crear una cuenta", "Con tu cuenta puedes sincronizar tus enlaces.", "Crear mi cuenta"],
     forgot: ["Recupera tu acceso", "Te enviaremos un enlace seguro para elegir una contraseña nueva.", "Enviar enlace"],
     reset: ["Crea una contraseña nueva", "Usa al menos 8 caracteres para proteger tu espacio.", "Guardar contraseña"],
   }[mode];
@@ -161,7 +161,6 @@ function setupUser(user) {
 function updateClock() {
   const now = new Date();
   $("#time-label").textContent = new Intl.DateTimeFormat("es", { hour: "2-digit", minute: "2-digit", hour12: false }).format(now);
-  $("#time-caption").textContent = now.getHours() < 12 ? "Empieza con intención" : now.getHours() < 19 ? "Sigue avanzando" : "Cierra el día a tu ritmo";
 }
 
 async function loadLinks() {
@@ -204,20 +203,14 @@ function renderCategories() {
   nav.replaceChildren();
   options.replaceChildren();
 
-  categories().forEach(([name, count], index) => {
+  categories().forEach(([name, count]) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `category-button${state.category === name ? " active" : ""}`;
     if (state.category === name) button.setAttribute("aria-current", "page");
     const label = document.createElement("span");
     label.className = "category-label";
-    const symbol = document.createElement("span");
-    symbol.className = `category-symbol ${index === 0 ? "all" : name === "Favoritos" ? "favorite" : "custom"}`;
-    symbol.setAttribute("aria-hidden", "true");
-    if (name === "Favoritos") symbol.textContent = "★";
-    const text = document.createElement("span");
-    text.textContent = name;
-    label.append(symbol, text);
+    label.textContent = name;
     const number = document.createElement("span");
     number.className = "category-count";
     number.textContent = count;
@@ -259,6 +252,7 @@ function safeUrl(value) {
 function makeSiteIcon(link, className = "site-icon") {
   const icon = document.createElement("span");
   icon.className = className;
+  icon.setAttribute("aria-hidden", "true");
   icon.style.setProperty("--card-color", link.color || "#7c5cff");
   const fallback = document.createElement("span");
   fallback.textContent = link.name.trim().charAt(0).toUpperCase() || "↗";
@@ -335,8 +329,6 @@ function makeLinkCard(link) {
   card.className = "link-card";
   card.style.setProperty("--card-color", link.color || "#7c5cff");
 
-  const top = document.createElement("div");
-  top.className = "card-top";
   const icon = makeSiteIcon(link);
 
   const actions = document.createElement("div");
@@ -412,7 +404,6 @@ function makeLinkCard(link) {
   edit.setAttribute("aria-label", `Editar acceso: ${link.name}`);
   edit.addEventListener("click", () => openLinkDialog(link));
   actions.append(favorite, edit);
-  top.append(icon, actions);
 
   const anchor = document.createElement("a");
   anchor.className = "link-main";
@@ -428,7 +419,7 @@ function makeLinkCard(link) {
   category.textContent = link.category || "Sin categoría";
   anchor.append(title, domain, category);
 
-  card.append(top, anchor);
+  card.append(icon, anchor, actions);
   return card;
 }
 
@@ -439,11 +430,16 @@ function render() {
   const grid = $("#links-grid");
   grid.replaceChildren(...links.map(makeLinkCard));
   $("#section-title").textContent = state.category === "Todos" ? "Todos los accesos" : state.category;
-  $("#section-eyebrow").textContent = state.query ? "Resultados" : "Tu colección";
   $("#link-count").textContent = `${links.length} ${links.length === 1 ? "sitio" : "sitios"}`;
   const empty = links.length === 0;
   grid.classList.toggle("hidden", empty);
   $("#empty-state").classList.toggle("hidden", !empty);
+  if (empty) {
+    const filtered = Boolean(state.query || state.category !== "Todos");
+    $("#empty-state h3").textContent = filtered ? "Sin resultados" : "Todavía no tienes accesos";
+    $("#empty-state p").textContent = filtered ? "Prueba otra búsqueda o categoría." : "Guarda una dirección web para empezar.";
+    $("#empty-add-button").textContent = filtered ? "Añadir acceso" : "Crear mi primer acceso";
+  }
   const customCategories = new Set(state.links.map((link) => link.category || "Sin categoría"));
   $("#total-stat").textContent = state.links.length;
   $("#favorite-stat").textContent = state.links.filter((link) => link.is_favorite).length;
