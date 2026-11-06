@@ -811,9 +811,9 @@ async function init() {
       { id: "1", name: "Gmail", url: "https://mail.google.com", category: "Trabajo", color: "#e9574f", is_favorite: true, position: 0 },
       { id: "2", name: "GitHub", url: "https://github.com", category: "Desarrollo", color: "#59647a", is_favorite: true, position: 1 },
       { id: "3", name: "YouTube", url: "https://youtube.com", category: "Entretenimiento", color: "#ff3f55", is_favorite: false, position: 2 },
-      { id: "4", name: "ChatGPT", url: "https://chatgpt.com", category: "Herramientas", color: "#24a184", is_favorite: true, position: 3 },
+      { id: "4", name: "ChatGPT", url: "https://chatgpt.com", category: "Herramientas", color: "#50749e", is_favorite: true, position: 3 },
       { id: "5", name: "Google Drive", url: "https://drive.google.com", category: "Trabajo", color: "#377cf6", is_favorite: false, position: 4 },
-      { id: "6", name: "Spotify", url: "https://open.spotify.com", category: "Entretenimiento", color: "#1dbf64", is_favorite: false, position: 5 },
+      { id: "6", name: "Spotify", url: "https://open.spotify.com", category: "Entretenimiento", color: "#64738c", is_favorite: false, position: 5 },
     ];
     $("#loading-state").classList.add("hidden");
     showView("dashboard");

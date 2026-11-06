@@ -229,7 +229,7 @@ kbd { padding: 5px 8px; border: 1px solid var(--border); border-radius: 7px; col
 .favorite-card small { color: var(--subtle); overflow: hidden; text-overflow: ellipsis; }
 .favorite-arrow { color: var(--subtle); }
 .favorite-icon, .site-icon { position: relative; display: grid; flex: none; width: 32px; height: 32px; place-items: center; overflow: hidden; border-radius: 5px; border-bottom: 2px solid var(--card-color); background: var(--bg-soft); color: var(--text); font-weight: 700; }
-.favorite-icon img, .site-icon img { position: absolute; inset: 0; width: 100%; height: 100%; padding: 4px; object-fit: contain; background: white; opacity: 0; }
+.favorite-icon img, .site-icon img { position: absolute; inset: 0; width: 100%; height: 100%; padding: 4px; object-fit: contain; filter: grayscale(1); background: white; opacity: 0; }
 .has-image img { opacity: 1; }
 .links-grid { display: grid; border-top: 1px solid var(--border); }
 .link-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 12px 4px; border-bottom: 1px solid var(--border); }
